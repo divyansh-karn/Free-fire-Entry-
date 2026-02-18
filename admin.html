@@ -3,33 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FF Admin - Auto Team Full System</title>
+    <title>FF Admin - Manage Entries</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 1000px; background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #3b82f6; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
-        h2 { color: #3b82f6; margin: 0; font-size: 24px; text-transform: uppercase; }
-        .btn-clear { background: #991b1b; color: white; border: none; padding: 12px 20px; cursor: pointer; border-radius: 8px; font-weight: bold; transition: 0.3s; }
-        .btn-clear:hover { background: #ef4444; }
-        .table-container { width: 100%; overflow-x: auto; border-radius: 8px; }
+        .container { width: 100%; max-width: 1000px; background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #3b82f6; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        h2 { color: #3b82f6; margin: 0; }
+        .btn-clear { background: #991b1b; color: white; border: none; padding: 12px 20px; cursor: pointer; border-radius: 8px; font-weight: bold; }
+        .table-container { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th, td { padding: 15px; border-bottom: 1px solid #334155; text-align: left; font-size: 14px; }
-        th { background: #3b82f6; color: white; }
-        .status-pending { color: #f59e0b; font-weight: bold; }
+        th, td { padding: 15px; border-bottom: 1px solid #334155; text-align: left; }
+        th { background: #3b82f6; }
         .status-accepted { color: #22c55e; font-weight: bold; }
         .status-rejected { color: #ef4444; font-weight: bold; }
-        .btn-acc { background: #22c55e; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-        .btn-rej { background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
         .reason-box { background: #0f172a; border: 1px solid #334155; color: white; padding: 8px; border-radius: 6px; width: 140px; }
-        .count-badge { background: #3b82f6; padding: 5px 15px; border-radius: 20px; font-size: 14px; }
+        .count-badge { background: #3b82f6; padding: 5px 12px; border-radius: 20px; font-size: 14px; margin-left: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-flex">
-        <h2>📩 Registrations <span id="acceptedCount" class="count-badge">Accepted: 0/3</span></h2>
-        <button class="btn-clear" onclick="clearHistory()">🗑️ Clear All History</button>
+        <h2>📩 Management <span id="acceptedCount" class="count-badge">Accepted: 0/3</span></h2>
+        <button class="btn-clear" onclick="clearHistory()">🗑️ Clear History</button>
     </div>
 
     <div class="table-container">
@@ -39,7 +35,6 @@
                     <th>Team/Leader</th>
                     <th>Player/UID</th>
                     <th>Lvl</th>
-                    <th>Player Msg</th>
                     <th>Admin Reason</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -52,29 +47,24 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB9NhZECekauKgSSj8o8JhcUevOcXLwk70",
         authDomain: "ff-entry.firebaseapp.com",
         projectId: "ff-entry",
-        storageBucket: "ff-entry.firebasestorage.app",
-        messagingSenderId: "470845638875",
-        appId: "1:470845638875:web:6e91c8ae22aedbc437e4fe",
-        measurementId: "G-K3K5V0YMQT"
+        appId: "1:470845638875:web:6e91c8ae22aedbc437e4fe"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const q = query(collection(db, "registrations"), orderBy("submittedAt", "desc"));
-    
-    onSnapshot(q, (snapshot) => {
+    onSnapshot(query(collection(db, "registrations"), orderBy("submittedAt", "desc")), (snap) => {
         const tableBody = document.getElementById('adminTableBody');
         tableBody.innerHTML = "";
         let acceptedTotal = 0;
 
-        snapshot.forEach((docSnap) => {
+        snap.forEach((docSnap) => {
             const data = docSnap.data();
             const id = docSnap.id;
             if(data.status === 'accepted') acceptedTotal++;
@@ -82,54 +72,41 @@
             tableBody.innerHTML += `
                 <tr>
                     <td><b>${data.team}</b><br><small>${data.leader}</small></td>
-                    <td>${data.playerName}<br><small>UID: ${data.playerUID}</small></td>
+                    <td>${data.playerName}<br><small>${data.playerUID}</small></td>
                     <td>${data.playerLevel}</td>
-                    <td><small>${data.reason || '-'}</small></td>
                     <td><input type="text" id="res-${id}" class="reason-box" value="${data.adminReason || ''}"></td>
                     <td class="status-${data.status}">${(data.status || 'pending').toUpperCase()}</td>
                     <td>
-                        <button class="btn-acc" onclick="updateStatus('${id}', 'accepted')">✔</button>
-                        <button class="btn-rej" onclick="updateStatus('${id}', 'rejected')">✖</button>
+                        <button onclick="updateStatus('${id}', 'accepted')" style="background:#22c55e; border:none; padding:8px; border-radius:5px; color:white; cursor:pointer;">✔</button>
+                        <button onclick="updateStatus('${id}', 'rejected')" style="background:#ef4444; border:none; padding:8px; border-radius:5px; color:white; cursor:pointer;">✖</button>
                     </td>
-                </tr>
-            `;
+                </tr>`;
         });
         document.getElementById('acceptedCount').innerText = `Accepted: ${acceptedTotal}/3`;
     });
 
     window.updateStatus = async (id, newStatus) => {
         const adminReason = document.getElementById(`res-${id}`).value;
-        const docRef = doc(db, "registrations", id);
+        await updateDoc(doc(db, "registrations", id), { status: newStatus, adminReason: adminReason });
 
-        try {
-            await updateDoc(docRef, { status: newStatus, adminReason: adminReason });
+        if (newStatus === 'accepted') {
+            const allDocs = await getDocs(collection(db, "registrations"));
+            const acceptedCount = allDocs.docs.filter(d => d.data().status === 'accepted').length;
 
-            // --- AUTO TEAM FULL LOGIC ---
-            if (newStatus === 'accepted') {
-                const allDocs = await getDocs(collection(db, "registrations"));
-                let acceptedList = allDocs.docs.filter(d => d.data().status === 'accepted');
-
-                if (acceptedList.length >= 3) {
-                    const pendingDocs = allDocs.docs.filter(d => d.data().status === 'pending');
-                    const autoRejectPromises = pendingDocs.map(pDoc => 
-                        updateDoc(doc(db, "registrations", pDoc.id), {
-                            status: 'rejected',
-                            adminReason: 'Team Full'
-                        })
-                    );
-                    await Promise.all(autoRejectPromises);
-                    alert("Team is now full (3/3). All others auto-rejected!");
-                }
+            if (acceptedCount >= 3) {
+                const pendingDocs = allDocs.docs.filter(d => d.data().status === 'pending');
+                pendingDocs.forEach(async (p) => {
+                    await updateDoc(doc(db, "registrations", p.id), { status: 'rejected', adminReason: 'Team Full' });
+                });
+                alert("Team Full! Others rejected.");
             }
-            alert("Updated!");
-        } catch (e) { alert(e.message); }
+        }
     };
 
     window.clearHistory = async () => {
-        if (confirm("⚠️ Delete All Data?")) {
+        if(confirm("Delete All?")) {
             const snap = await getDocs(collection(db, "registrations"));
-            await Promise.all(snap.docs.map(d => deleteDoc(doc(db, "registrations", d.id))));
-            alert("History Cleared!");
+            snap.forEach(d => deleteDoc(doc(db, "registrations", d.id)));
         }
     };
 </script>
