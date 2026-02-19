@@ -1,121 +1,196 @@
-<!DOCTYPE html>
+        <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FF Tournament Entry</title>
+    <title>FF Tournament Registration</title>
     <style>
-        body { 
-            margin: 0; min-height: 100vh; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; background: #0f172a; 
-            font-family: 'Segoe UI', sans-serif; color: white; padding: 20px; 
-        }
-        .card { 
-            background: #1e293b; padding: 25px; border-radius: 12px; width: 100%; 
-            max-width: 400px; border: 1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            margin-bottom: 20px; box-sizing: border-box;
-        }
-        h2 { text-align: center; margin: 0 0 20px 0; color: #3b82f6; text-transform: uppercase; }
-        label { font-size: 12px; color: #94a3b8; display: block; margin-bottom: 2px; }
-        input { 
-            width: 100%; padding: 12px; margin-bottom: 15px; background: #0f172a; 
-            border: 1px solid #334155; border-radius: 8px; color: white; box-sizing: border-box; 
-        }
-        input:focus { border-color: #3b82f6; outline: none; }
-        button { 
-            width: 100%; padding: 14px; background: #3b82f6; border: none; 
-            color: white; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s;
-        }
-        button:hover { background: #2563eb; transform: translateY(-2px); }
-        .status-box { 
-            background: #0f172a; padding: 15px; border-radius: 8px; 
-            margin-top: 15px; display: none; border-left: 4px solid #3b82f6;
-        }
+        :root { --primary: #3b82f6; --bg: #0f172a; --card: #1e293b; --success: #10b981; }
+        body { margin: 0; min-height: 100vh; background: var(--bg); font-family: 'Segoe UI', sans-serif; color: white; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Live Info Card */
+        .info-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid var(--success); border-radius: 12px; width: 100%; max-width: 400px; padding: 15px; margin-bottom: 20px; box-sizing: border-box; text-align: center; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        #modeBadge { display: inline-block; padding: 4px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2); }
+        .info-card h3 { margin: 0 0 10px 0; color: var(--success); font-size: 16px; text-transform: uppercase; }
+        .match-details { display: flex; justify-content: space-around; font-size: 12px; color: #94a3b8; }
+        .match-details b { color: white; display: block; font-size: 15px; margin-top: 3px; }
+
+        /* Form Card */
+        .card { background: var(--card); padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; border: 1px solid var(--primary); box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin-bottom: 20px; box-sizing: border-box; }
+        h2 { text-align: center; margin: 0 0 20px 0; color: var(--primary); text-transform: uppercase; font-size: 20px; }
+        label { font-size: 11px; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; padding: 14px; background: var(--primary); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .status-box { background: #0f172a; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; border-left: 4px solid var(--primary); }
+        .room-info { background: #064e3b; border: 1px dashed #10b981; padding: 12px; margin-top: 10px; border-radius: 8px; font-size: 14px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
+<div class="info-card">
+    <div id="modeBadge">TBA</div>
+    <h3>📢 Match Information</h3>
+    <div class="match-details">
+        <div>TIME<b id="dispTime">--:--</b></div>
+        <div>DATE<b id="dispDate">--/--/--</b></div>
+        <div>PRIZE<b id="dispPrize">₹ 00</b></div>
+    </div>
+</div>
+
 <div class="card">
-    <h2>🏆 Squad Entry</h2>
+    <h2>🏆 Tournament Entry</h2>
     <form id="regForm">
+        <label>Select Purpose</label>
+        <select id="purpose" onchange="handlePurposeChange()" required>
+            <option value="Play With Admin">Mere Saath Khelo</option>
+            <option value="Custom Tournament">Custom Tournament</option>
+        </select>
+
+        <div id="customOnlyFields" class="hidden">
+            <label>Match Mode</label>
+            <select id="matchMode" onchange="handleMatchModeChange()">
+                <option value="BR Match">BR Match (Bermuda)</option>
+                <option value="CS Match">CS Match (Clash Squad)</option>
+            </select>
+            <label>Entry Type</label>
+            <select id="entryType">
+                <option value="Solo">Solo</option>
+                <option value="Duo">Duo</option>
+                <option value="Squad">Squad</option>
+            </select>
+        </div>
+
         <label>Team Name</label>
-        <input type="text" id="teamName" placeholder="Enter Team Name" required>
-        <label>Leader Name (IGN)</label>
-        <input type="text" id="leaderName" placeholder="Leader Name" required>
-        <label>Player Name</label>
-        <input type="text" id="pName" placeholder="Your Name" required>
-        <label>UID</label>
+        <input type="text" id="teamName" placeholder="Team Name" required>
+        
+        <div id="leaderSection">
+            <label>Leader Name</label>
+            <input type="text" id="leaderName" placeholder="Leader In-Game Name" required>
+        </div>
+        
+        <label>Your Player Name</label>
+        <input type="text" id="pName" placeholder="Your In-Game Name" required>
+        <label>UID (Min 8 Digits)</label>
         <input type="number" id="pUID" placeholder="Your UID" required>
-        <label>Level (20+ Only)</label>
-        <input type="number" id="pLevel" placeholder="Min 20" min="20" required>
-        <label>Reason (Optional)</label>
-        <input type="text" id="pReason" placeholder="Write something...">
+        <label>Level</label>
+        <input type="number" id="pLevel" placeholder="Level 20+" min="20" required>
+        
         <button type="submit" id="submitBtn">Submit Entry</button>
     </form>
 </div>
 
 <div class="card">
-    <h3>🔍 Check Status</h3>
-    <input type="number" id="searchUID" placeholder="Enter UID to check">
-    <button onclick="checkStatus()" style="background: #10b981;">Check Result</button>
+    <h3>🔍 Check Room Details</h3>
+    <input type="number" id="searchUID" placeholder="Enter Registered UID">
+    <button onclick="checkStatus()" style="background: var(--success);">Get Room ID/Pass</button>
     <div id="statusResult" class="status-box"></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // --- PASTE YOUR CONFIG HERE ---
     const firebaseConfig = {
         apiKey: "AIzaSyB9NhZECekauKgSSj8o8JhcUevOcXLwk70",
         authDomain: "ff-entry.firebaseapp.com",
         projectId: "ff-entry",
-        storageBucket: "ff-entry.firebasestorage.app",
-        messagingSenderId: "470845638875",
-        appId: "1:470845638875:web:6e91c8ae22aedbc437e4fe",
-        measurementId: "G-K3K5V0YMQT"
+        appId: "1:470845638875:web:6e91c8ae22aedbc437e4fe"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const form = document.getElementById('regForm');
-    form.addEventListener('submit', async (e) => {
+    // LIVE: Get Match Info from Admin
+    onSnapshot(doc(db, "settings", "matchDetails"), (snap) => {
+        if(snap.exists()){
+            const data = snap.data();
+            document.getElementById('dispTime').innerText = data.time || "TBA";
+            document.getElementById('dispDate').innerText = data.date || "TBA";
+            document.getElementById('dispPrize').innerText = "₹ " + (data.prize || "0");
+            const badge = document.getElementById('modeBadge');
+            badge.innerText = data.mode || "TBA";
+            badge.style.background = (data.mode === "CS Match") ? "#8b5cf6" : "#f59e0b";
+            badge.style.color = (data.mode === "CS Match") ? "white" : "black";
+        }
+    });
+
+    window.handlePurposeChange = () => {
+        const p = document.getElementById('purpose').value;
+        const cf = document.getElementById('customOnlyFields');
+        const ls = document.getElementById('leaderSection');
+        const ln = document.getElementById('leaderName');
+        if (p === "Custom Tournament") {
+            cf.classList.remove('hidden'); ls.classList.add('hidden');
+            ln.required = false; ln.value = "N/A"; handleMatchModeChange();
+        } else {
+            cf.classList.add('hidden'); ls.classList.remove('hidden');
+            ln.required = true; ln.value = "";
+        }
+    };
+
+    window.handleMatchModeChange = () => {
+        const mm = document.getElementById('matchMode').value;
+        const et = document.getElementById('entryType');
+        et.innerHTML = mm === "CS Match" ? '<option value="Squad">Squad</option>' : 
+                       '<option value="Solo">Solo</option><option value="Duo">Duo</option><option value="Squad">Squad</option>';
+    };
+
+    document.getElementById('regForm').onsubmit = async (e) => {
         e.preventDefault();
+        const uid = document.getElementById('pUID').value;
+        const purpose = document.getElementById('purpose').value;
+        const matchMode = document.getElementById('matchMode').value;
+
+        if (uid.length < 8) return alert("❌ UID 8 anko ki honi chahiye!");
+
         const btn = document.getElementById('submitBtn');
-        btn.disabled = true; btn.innerText = "Processing...";
+        btn.disabled = true; btn.innerText = "Checking Slots...";
+        
         try {
+            const snap = await getDocs(collection(db, "registrations"));
+            const entries = snap.docs.map(d => d.data());
+
+    if (purpose === "Custom Tournament") {
+                const count = entries.filter(d => d.matchMode === matchMode).length;
+                const limit = (matchMode === "CS Match") ? 8 : 50;
+                if (count >= limit) {
+                    alert(❌ ${matchMode} Slots Full!);
+                    btn.disabled = false; btn.innerText = "Submit Entry";
+                    return;
+                }
+            }
+
             await addDoc(collection(db, "registrations"), {
+                purpose, matchMode: (purpose === "Custom Tournament") ? matchMode : "N/A",
+                entryMode: (purpose === "Custom Tournament") ? document.getElementById('entryType').value : "N/A",
                 team: document.getElementById('teamName').value,
                 leader: document.getElementById('leaderName').value,
                 playerName: document.getElementById('pName').value,
-                playerUID: document.getElementById('pUID').value,
-                playerLevel: Number(document.getElementById('pLevel').value),
-                reason: document.getElementById('pReason').value,
-                status: "pending",
-                adminReason: "",
-                submittedAt: serverTimestamp()
+                playerUID: uid, playerLevel: Number(document.getElementById('pLevel').value),
+                status: "accepted", submittedAt: serverTimestamp()
             });
-            alert("✅ Entry Submitted!");
-            form.reset();
+
+            alert("✅ Entry Successful! Welcome to Tournament.");
+            e.target.reset(); handlePurposeChange();
         } catch (err) { alert(err.message); }
         btn.disabled = false; btn.innerText = "Submit Entry";
-    });
+    };
 
     window.checkStatus = async () => {
         const uid = document.getElementById('searchUID').value;
         const resDiv = document.getElementById('statusResult');
         const q = query(collection(db, "registrations"), where("playerUID", "==", uid));
         const snap = await getDocs(q);
+        const rDoc = await getDoc(doc(db, "settings", "roomDetails"));
+        const rData = rDoc.exists() ? rDoc.data() : { id: "TBA", pass: "TBA" };
+
         resDiv.style.display = "block";
-        if (snap.empty) { resDiv.innerHTML = "❌ No entry found."; }
-        else {
-            snap.forEach(doc => {
-                const d = doc.data();
-                resDiv.innerHTML = `<p>Status: <b style="color:#3b82f6">${d.status.toUpperCase()}</b></p>
-                                    <p>Admin Msg: ${d.adminReason || "Pending review..."}</p>`;
-            });
-        }
+        if (snap.empty) resDiv.innerHTML = "❌ No Record Found.";
+        else snap.forEach(docSnap => {
+            resDiv.innerHTML = <p>Status: <b style="color:var(--success)">ACCEPTED</b></p>
+                                <div class="room-info">🆔 Room ID: ${rData.id}<br>🔑 Password: ${rData.pass}</div>;
+        });
     };
 </script>
 </body>
