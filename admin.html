@@ -3,51 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FF Admin - Manage Entries</title>
+    <title>Admin Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 1000px; background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #3b82f6; }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
-        h2 { color: #3b82f6; margin: 0; }
-        .btn-clear { background: #991b1b; color: white; border: none; padding: 12px 20px; cursor: pointer; border-radius: 8px; font-weight: bold; }
-        .table-container { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th, td { padding: 15px; border-bottom: 1px solid #334155; text-align: left; }
-        th { background: #3b82f6; }
-        .status-accepted { color: #22c55e; font-weight: bold; }
-        .status-rejected { color: #ef4444; font-weight: bold; }
-        .reason-box { background: #0f172a; border: 1px solid #334155; color: white; padding: 8px; border-radius: 6px; width: 140px; }
-        .count-badge { background: #3b82f6; padding: 5px 12px; border-radius: 20px; font-size: 14px; margin-left: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; padding: 20px; }
+        .box { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #3b82f6; margin-bottom: 20px; }
+        .flex { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
+        label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
+        input, select { padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; }
+        button { padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; background: #10b981; color: white; }
+        .btn-red { background: #ef4444; }
+        table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 12px; overflow: hidden; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { background: #3b82f6; font-size: 13px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header-flex">
-        <h2>📩 Management <span id="acceptedCount" class="count-badge">Accepted: 0/3</span></h2>
-        <button class="btn-clear" onclick="clearHistory()">🗑️ Clear History</button>
-    </div>
-
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Team/Leader</th>
-                    <th>Player/UID</th>
-                    <th>Lvl</th>
-                    <th>Admin Reason</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="adminTableBody"></tbody>
-        </table>
+<div class="box">
+    <h3 style="color:#3b82f6; margin-top:0;">📝 Tournament Display Settings</h3>
+    <div class="flex">
+        <div><label>Mode</label><select id="mMode"><option value="BR Match">BR Match</option><option value="CS Match">CS Match</option></select></div>
+        <div><label>Time</label><input type="text" id="mTime" placeholder="Eg: 09:00 PM"></div>
+        <div><label>Date</label><input type="text" id="mDate" placeholder="Eg: 25 Feb"></div>
+        <div><label>Prize</label><input type="number" id="mPrize" placeholder="₹"></div>
+        <button onclick="updateInfo()">Update Player Page</button>
     </div>
 </div>
 
+<div class="box">
+    <h3 style="color:#10b981; margin-top:0;">🎮 Live Room ID/Pass</h3>
+    <div class="flex">
+        <input type="text" id="rId" placeholder="Room ID">
+        <input type="text" id="rPass" placeholder="Password">
+        <button onclick="updateRoom()">Set ID/Pass</button>
+    </div>
+</div>
+
+<div style="display:flex; justify-content:space-between; align-items:center;">
+    <h2>📩 Registered Players</h2>
+    <button class="btn-red" onclick="resetAll()">🗑️ Clear All Data</button>
+</div>
+
+<table>
+    <thead><tr><th>Mode</th><th>Team/Leader</th><th>Player (UID)</th></tr></thead>
+    <tbody id="tbody"></tbody>
+</table>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB9NhZECekauKgSSj8o8JhcUevOcXLwk70",
@@ -59,52 +63,38 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    onSnapshot(query(collection(db, "registrations"), orderBy("submittedAt", "desc")), (snap) => {
-        const tableBody = document.getElementById('adminTableBody');
-        tableBody.innerHTML = "";
-        let acceptedTotal = 0;
-
-        snap.forEach((docSnap) => {
-            const data = docSnap.data();
-            const id = docSnap.id;
-            if(data.status === 'accepted') acceptedTotal++;
-
-            tableBody.innerHTML += `
-                <tr>
-                    <td><b>${data.team}</b><br><small>${data.leader}</small></td>
-                    <td>${data.playerName}<br><small>${data.playerUID}</small></td>
-                    <td>${data.playerLevel}</td>
-                    <td><input type="text" id="res-${id}" class="reason-box" value="${data.adminReason || ''}"></td>
-                    <td class="status-${data.status}">${(data.status || 'pending').toUpperCase()}</td>
-                    <td>
-                        <button onclick="updateStatus('${id}', 'accepted')" style="background:#22c55e; border:none; padding:8px; border-radius:5px; color:white; cursor:pointer;">✔</button>
-                        <button onclick="updateStatus('${id}', 'rejected')" style="background:#ef4444; border:none; padding:8px; border-radius:5px; color:white; cursor:pointer;">✖</button>
-                    </td>
-                </tr>`;
+    window.updateInfo = async () => {
+        await setDoc(doc(db, "settings", "matchDetails"), {
+            mode: document.getElementById('mMode').value,
+            time: document.getElementById('mTime').value,
+            date: document.getElementById('mDate').value,
+            prize: document.getElementById('mPrize').value
         });
-        document.getElementById('acceptedCount').innerText = `Accepted: ${acceptedTotal}/3`;
-    });
-
-    window.updateStatus = async (id, newStatus) => {
-        const adminReason = document.getElementById(`res-${id}`).value;
-        await updateDoc(doc(db, "registrations", id), { status: newStatus, adminReason: adminReason });
-
-        if (newStatus === 'accepted') {
-            const allDocs = await getDocs(collection(db, "registrations"));
-            const acceptedCount = allDocs.docs.filter(d => d.data().status === 'accepted').length;
-
-            if (acceptedCount >= 3) {
-                const pendingDocs = allDocs.docs.filter(d => d.data().status === 'pending');
-                pendingDocs.forEach(async (p) => {
-                    await updateDoc(doc(db, "registrations", p.id), { status: 'rejected', adminReason: 'Team Full' });
-                });
-                alert("Team Full! Others rejected.");
-            }
-        }
+        alert("Match Info Updated!");
     };
 
-    window.clearHistory = async () => {
-        if(confirm("Delete All?")) {
+    window.updateRoom = async () => {
+        await setDoc(doc(db, "settings", "roomDetails"), {
+            id: document.getElementById('rId').value,
+            pass: document.getElementById('rPass').value
+        });
+        alert("Room Details Updated!");
+    };
+
+    onSnapshot(query(collection(db, "registrations"), orderBy("submittedAt", "desc")), (snap) => {const tb = document.getElementById('tbody');
+        tb.innerHTML = "";
+        snap.forEach(dDoc => {
+            const d = dDoc.data();
+            tb.innerHTML += <tr>
+                <td><b>${d.matchMode}</b><br><small>${d.entryMode}</small></td>
+                <td><b>${d.team}</b><br><small>${d.leader}</small></td>
+                <td>${d.playerName}<br><small>${d.playerUID}</small></td>
+            </tr>;
+        });
+    });
+
+    window.resetAll = async () => {
+        if(confirm("Sare players delete karein?")){
             const snap = await getDocs(collection(db, "registrations"));
             snap.forEach(d => deleteDoc(doc(db, "registrations", d.id)));
         }
